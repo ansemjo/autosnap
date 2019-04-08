@@ -26,52 +26,79 @@ retention() {
   esac
 }
 
-
-# ---------------------------------------
-
 # show a nice overview for debugging
-(listheader; list "$@") | column -t
+overview() { (listheader; list "$@") | column -t; }
 
-# common execution timestamp
-timestamp=$(date --utc +%FT%T%Z)
+# return true if verbose
+verbose() { [[ $AUTOSNAP_VERBOSE = yes ]]; }
 
-# iterate over datasets
-list "$@" | while IFS=$'\t' read name autosnap minimum minutes hours days weeks months years; do
+# main routine taking snapshots and purging old ones
+autosnap() {
 
-  # check if we should operate on this dataset at all ('no' or anything else than inherited/'yes' --> skip)
-  # this check is overdefined but makes the intention clearer
-  if [[ $autosnap = no ]] || ! ( [[ $autosnap = - ]] || [[ $autosnap = yes ]] ); then
-    echo "skip $name" >&2
-    continue
-  fi
-  
-  # create new snapshot
-  newsnap="$name@autosnap:$timestamp"
-  zfs snapshot "$newsnap"
-  echo "created snapshot: $newsnap"
+  # common execution timestamp
+  timestamp=$(date --utc +%FT%T%Z)
 
-  # apply default retention policies
-  minimum=$(retention "$minimum"  3 "$name" minimum)
-  minutes=$(retention "$minutes"  1 "$name" minutes)
-    hours=$(retention "$hours"   24 "$name" hours)
-     days=$(retention "$days"     7 "$name" days)
-    weeks=$(retention "$weeks"    4 "$name" weeks)
-   months=$(retention "$months"  12 "$name" months)
-    years=$(retention "$years"   10 "$name" years)
+  # iterate over datasets
+  list "$@" | while IFS=$'\t' read name autosnap minimum minutes hours days weeks months years; do
 
-  # sieve old snapshots and purge
-  snaplist "$name" | datesieve --sort \
-    --resub '.*\t' '' --strptime '%s' \
-    --minimum "$minimum" \
-    --minutes "$minutes" \
-    --hours "$hours" \
-    --days "$days" \
-    --weeks "$weeks" \
-    --months "$months" \
-    --years "$years" \
-    | while IFS=$'\t' read snapshot epoch; do
-      zfs destroy "$snapshot"
-      echo "destroyed $snapshot"
-    done
+    # check if we should operate on this dataset at all ('no' or anything else than inherited/'yes' --> skip)
+    # this check is overdefined but makes the intention clearer
+    if [[ $autosnap = no ]] || ! ( [[ $autosnap = - ]] || [[ $autosnap = yes ]] ); then
+      verbose && echo "skip $name" >&2
+      continue
+    fi
 
+    # create new snapshot
+    newsnap="$name@autosnap:$timestamp"
+    zfs snapshot "$newsnap"
+    verbose && echo "created snapshot: $newsnap"
+
+    # apply default retention policies
+    minimum=$(retention "$minimum"  3 "$name" minimum)
+    minutes=$(retention "$minutes"  1 "$name" minutes)
+      hours=$(retention "$hours"   24 "$name" hours)
+       days=$(retention "$days"     7 "$name" days)
+      weeks=$(retention "$weeks"    4 "$name" weeks)
+     months=$(retention "$months"  12 "$name" months)
+      years=$(retention "$years"   10 "$name" years)
+
+    # sieve old snapshots and purge
+    snaplist "$name" | datesieve --sort \
+      --resub '.*\t' '' --strptime '%s' \
+      --minimum "$minimum" \
+      --minutes "$minutes" \
+      --hours "$hours" \
+      --days "$days" \
+      --weeks "$weeks" \
+      --months "$months" \
+      --years "$years" \
+      | while IFS=$'\t' read snapshot epoch; do
+        zfs destroy "$snapshot"
+        verbose && echo "destroyed $snapshot"
+      done
+
+  done
+
+}
+
+usage() {
+  printf '%s\n' >&2 \
+    "usage: $0 [-v] [-l] [dataset [...]]" \
+    "  -v  be verbose" \
+    "  -l  print overview"
+  exit 1
+}
+
+# ----------------------------------
+
+cmd=autosnap
+while getopts ':vl' opt; do
+  case $opt in
+    v) AUTOSNAP_VERBOSE=yes ;;
+    l) cmd=overview ;;
+    \?) usage ;;
+  esac
 done
+shift $((OPTIND -1))
+$cmd "$@"
+exit 0
