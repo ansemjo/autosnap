@@ -4,6 +4,8 @@ Description=Automatically snapshot ZFS datasets every 15 minutes
 [Timer]
 OnCalendar=*:0/15
 Persistent=true
+RandomizedDelaySec=5min
+AccuracySec=10sec
 
 [Install]
 WantedBy=timers.target
