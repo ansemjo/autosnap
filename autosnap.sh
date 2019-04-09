@@ -10,10 +10,10 @@
 #  - ansemjo:autosnap (yes/no): perform automatic snapshots on this dataset
 #  - ansemjo:autosnap:keep_* (int): configure retention policies of old snapshots
 props() { echo ansemjo:autosnap{,:keep_{minimum,minutes,hours,days,weeks,months,years}} | tr ' ' ','; }
+listheader() { printf 'name\tautosnap\tminimum\tminutes\thours\tdays\tweeks\tmonths\tyears\n'; }
 
 # get a recursive list of datasets
 list() { zfs list -Hp -r -t filesystem,volume -s name -o name,$(props) "$@"; }
-listheader() { printf 'name\tautosnap\tminimum\tminutes\thours\tdays\tweeks\tmonths\tyears\n'; }
 
 # get a list of applicable snapshots per dataset
 snaplist() { zfs list -Hp -d1 -t snapshot -o name,creation "$1" | grep "$1@autosnap:" ; }
@@ -29,8 +29,37 @@ retention() {
   esac
 }
 
+# apply autosnap defaults to dataset property list
+applydefaults() {
+  while IFS=$'\t' read name autosnap minimum minutes hours days weeks months years; do
+
+    # decide if we should operate on this dataset, undefined or an explicit 'yes' mean yes
+    if [[ $autosnap = - ]] || [[ $autosnap = yes ]]; then
+      autosnap=yes
+    else
+      autosnap=no
+    fi
+
+    # apply default retention policies
+    minimum=$(retention "$minimum"  3 "$name" minimum)
+    minutes=$(retention "$minutes"  4 "$name" minutes)
+      hours=$(retention "$hours"   24 "$name" hours)
+       days=$(retention "$days"     7 "$name" days)
+      weeks=$(retention "$weeks"    4 "$name" weeks)
+     months=$(retention "$months"  12 "$name" months)
+      years=$(retention "$years"   10 "$name" years)
+
+    # echo back
+    printf '%s' "$name"
+    printf '\t%s' "$autosnap" "$minimum" "$minutes" "$hours" "$days" "$weeks" "$months" "$years"
+    printf '\n'
+
+  done
+}
+
+
 # show a nice overview for debugging
-overview() { (listheader; list "$@") | column -t; }
+overview() { (listheader; list "$@" | applydefaults) | column -t; }
 
 # return true if verbose
 verbose() { [[ $AUTOSNAP_VERBOSE = yes ]]; }
@@ -50,11 +79,10 @@ autosnap() {
   timestamp=$(date --utc +%FT%T%Z)
 
   # iterate over datasets
-  list "$@" | while IFS=$'\t' read name autosnap minimum minutes hours days weeks months years; do
+  list "$@" | applydefaults | while IFS=$'\t' read name autosnap minimum minutes hours days weeks months years; do
 
-    # check if we should operate on this dataset at all ('no' or anything else than inherited/'yes' --> skip)
-    # this check is overdefined but makes the intention clearer
-    if [[ $autosnap = no ]] || ! ( [[ $autosnap = - ]] || [[ $autosnap = yes ]] ); then
+    # check if we should operate on this dataset at all
+    if [[ $autosnap = no ]]; then
       verbose && echo "skip $name" >&2
       continue
     fi
@@ -68,15 +96,6 @@ autosnap() {
     if [[ $AUTOSNAP_DATESIEVE = no ]]; then
       continue
     fi
-
-    # apply default retention policies
-    minimum=$(retention "$minimum"  3 "$name" minimum)
-    minutes=$(retention "$minutes"  4 "$name" minutes)
-      hours=$(retention "$hours"   24 "$name" hours)
-       days=$(retention "$days"     7 "$name" days)
-      weeks=$(retention "$weeks"    4 "$name" weeks)
-     months=$(retention "$months"  12 "$name" months)
-      years=$(retention "$years"   10 "$name" years)
 
     # sieve old snapshots and purge
     snaplist "$name" | datesieve --sort \
