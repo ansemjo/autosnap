@@ -68,7 +68,7 @@ autosnap() {
 
     # apply default retention policies
     minimum=$(retention "$minimum"  3 "$name" minimum)
-    minutes=$(retention "$minutes"  1 "$name" minutes)
+    minutes=$(retention "$minutes"  4 "$name" minutes)
       hours=$(retention "$hours"   24 "$name" hours)
        days=$(retention "$days"     7 "$name" days)
       weeks=$(retention "$weeks"    4 "$name" weeks)
