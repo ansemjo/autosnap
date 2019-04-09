@@ -1,4 +1,4 @@
-# Copyright (c) 2018 Anton Semjonov
+# Copyright (c) 2019 Anton Semjonov
 # Licensed under the MIT License
 
 # ---------- install ----------
@@ -12,6 +12,7 @@ PREFIX         := /usr
 BINARY_DIR     := $(DESTDIR)$(PREFIX)/bin
 SYSTEMD_DIR    := $(DESTDIR)$(PREFIX)/lib/systemd/system
 MANUAL_DIR     := $(DESTDIR)$(PREFIX)/share/man
+LICENSE_DIR    := $(DESTDIR)$(PREFIX)/share/licenses/$(NAME)
 
 # install binary and manuals
 .PHONY: install
@@ -19,7 +20,8 @@ install : \
 	$(BINARY_DIR)/$(NAME) \
 	$(MANUAL_DIR)/man8/$(NAME).8 \
 	$(SYSTEMD_DIR)/$(NAME).service \
-	$(SYSTEMD_DIR)/$(NAME).timer
+	$(SYSTEMD_DIR)/$(NAME).timer \
+	$(LICENSE_DIR)/LICENSE
 
 $(BINARY_DIR)/$(NAME) : $(NAME).sh
 	install -m 755 -D $< $@
@@ -33,6 +35,9 @@ $(MANUAL_DIR)/man8/$(NAME).8 : $(NAME).8
 $(SYSTEMD_DIR)/$(NAME).% : etc/$(NAME).%
 	install -m 644 -D $< $@
 	sed -i 's|/usr/bin|$(PREFIX)/bin|' $@
+
+$(LICENSE_DIR)/LICENSE : LICENSE
+	install -m 644 -D $< $@
 
 # ---------- packaging ----------
 

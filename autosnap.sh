@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Copyright (c) 2019 Anton Semjonov
+# Licensed under the MIT License
+
 # Create scheduled zfs snapshots and purge old snapshots
 # following simple x-in-timeframe retention policies.
 
