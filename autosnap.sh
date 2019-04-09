@@ -35,6 +35,14 @@ verbose() { [[ $AUTOSNAP_VERBOSE = yes ]]; }
 # main routine taking snapshots and purging old ones
 autosnap() {
 
+  # check if datesieve is available
+  AUTOSNAP_DATESIEVE=no
+  if which datesieve >/dev/null; then
+    AUTOSNAP_DATESIEVE=yes
+  else
+    echo "cannot purge old snapshots without https://github.com/ansemjo/datesieve" >&2
+  fi
+
   # common execution timestamp
   timestamp=$(date --utc +%FT%T%Z)
 
@@ -52,6 +60,11 @@ autosnap() {
     newsnap="$name@autosnap:$timestamp"
     zfs snapshot "$newsnap"
     verbose && echo "created snapshot: $newsnap"
+
+    # skip purging if datesieve is unavailable
+    if [[ $AUTOSNAP_DATESIEVE = no ]]; then
+      continue
+    fi
 
     # apply default retention policies
     minimum=$(retention "$minimum"  3 "$name" minimum)
