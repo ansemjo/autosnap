@@ -33,7 +33,7 @@ Configure `autosnap` by setting properties on the ZFS datasets directly with
 
 | property | valid values | meaning |
 | -------- | ------------ | ------- |
-| ansemjo:autosnap | 'yes' / 'no' | perform autosnapshots and purging on this dataset _at all_ |
+| ansemjo:autosnap | boolean | perform autosnapshots and purging on this dataset _at all_ |
 | ansemjo:autosnap:keep_minimum | positive integer | keep __at least__ _x_ snapshots, regardless of age |
 | ansemjo:autosnap:keep_minutes | positive integer | keep at least _x_ __minutes__ of snapshots |
 | ansemjo:autosnap:keep_hours | positive integer | keep at least _x_ __hours__ of snapshots |
@@ -42,8 +42,11 @@ Configure `autosnap` by setting properties on the ZFS datasets directly with
 | ansemjo:autosnap:keep_months | positive integer | keep at least _x_ __months__ of snapshots |
 | ansemjo:autosnap:keep_years | positive integer | keep at least _x_ __years__ of snapshots |
 
-ZFS properties are inherited by default, so if you want to disable snapshotting for an entire subtree of datasets
-simply set `ansemjo:autosnap=no` on its root. To reset a property to its inherited value use
+If `ansemjo:autosnap` is not set to a *truthy* value, autosnap will not operate on this dataset. Truthy can
+be `y`, `yes`, `true`, `on` or `1`. Anything alse will be *false*.
+
+ZFS properties are inherited by default, so if you want to enable snapshotting for an entire subtree of datasets
+simply set `ansemjo:autosnap=yes` on its root. To reset a property to its inherited value use
 `zfs inherit ansemjo:autosnap:... pool/dataset`.
 
 For example setting `ansemjo:autosnap:keep_days` to 7 means that for every day one snapshot will be kept,

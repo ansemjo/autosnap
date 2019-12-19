@@ -33,8 +33,8 @@ retention() {
 applydefaults() {
   while IFS=$'\t' read name autosnap minimum minutes hours days weeks months years; do
 
-    # decide if we should operate on this dataset, undefined or an explicit 'yes' mean yes
-    if [[ $autosnap = - ]] || [[ $autosnap = yes ]]; then
+    # decide if we should operate on this dataset, accept "truthy" values like {y,yes,true,on,1}
+    if [[ ${autosnap,,} =~ (y(es)?|on|true|1) ]]; then
       autosnap=yes
     else
       autosnap=no
