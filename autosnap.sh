@@ -42,11 +42,11 @@ applydefaults() {
 
     # apply default retention policies
     minimum=$(retention "$minimum"  3 "$name" minimum)
-    minutes=$(retention "$minutes"  4 "$name" minutes)
-      hours=$(retention "$hours"   24 "$name" hours)
-       days=$(retention "$days"     7 "$name" days)
+    minutes=$(retention "$minutes"  3 "$name" minutes)
+      hours=$(retention "$hours"    6 "$name" hours)
+       days=$(retention "$days"     3 "$name" days)
       weeks=$(retention "$weeks"    4 "$name" weeks)
-     months=$(retention "$months"  12 "$name" months)
+     months=$(retention "$months"   6 "$name" months)
       years=$(retention "$years"   10 "$name" years)
 
     # echo back
