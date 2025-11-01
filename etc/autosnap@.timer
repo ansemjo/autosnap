@@ -1,0 +1,11 @@
+[Unit]
+Description=Automatically snapshot ZFS dataset %i regularly
+
+[Timer]
+OnCalendar=*:0/15
+Persistent=true
+RandomizedDelaySec=5min
+AccuracySec=10sec
+
+[Install]
+WantedBy=timers.target

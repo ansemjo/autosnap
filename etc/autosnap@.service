@@ -1,0 +1,8 @@
+[Unit]
+Description=Automatically snapshot ZFS dataset %i
+Requires=zfs.target
+After=zfs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/autosnap -v %i

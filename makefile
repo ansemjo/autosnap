@@ -21,6 +21,8 @@ install : \
 	$(MANUAL_DIR)/man8/$(NAME).8 \
 	$(SYSTEMD_DIR)/$(NAME).service \
 	$(SYSTEMD_DIR)/$(NAME).timer \
+	$(SYSTEMD_DIR)/$(NAME)@.service \
+	$(SYSTEMD_DIR)/$(NAME)@.timer \
 	$(LICENSE_DIR)/LICENSE
 
 $(BINARY_DIR)/$(NAME) : $(NAME).sh
@@ -32,7 +34,7 @@ $(NAME).8 : README.md
 $(MANUAL_DIR)/man8/$(NAME).8 : $(NAME).8
 	install -m 644 -D $< $@
 
-$(SYSTEMD_DIR)/$(NAME).% : etc/$(NAME).%
+$(SYSTEMD_DIR)/$(NAME)% : etc/$(NAME)%
 	install -m 644 -D $< $@
 	sed -i 's|/usr/bin|$(PREFIX)/bin|' $@
 
@@ -50,8 +52,7 @@ PKGURL      := https://github.com/ansemjo/$(PKGNAME)
 PKGFORMATS  := rpm deb
 
 # how to execute fpm
-DOCKER_BIN := $(shell which podman || which docker)
-FPM := $(DOCKER_BIN) run --rm --net none -v $$PWD:/src -w /src ansemjo/fpm:alpine
+FPM := docker run --rm --net none -v $$PWD:/src -w /src ghcr.io/ansemjo/fpm
 
 # build a package
 .PHONY: package-%
